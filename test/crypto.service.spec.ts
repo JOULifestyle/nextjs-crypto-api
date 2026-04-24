@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CryptoService } from './crypto.service';
+import { CryptoService } from '../src/crypto/crypto.service';
 import { HttpModule } from '@nestjs/axios';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Crypto } from './crypto.entity';
+import { Crypto } from '../src/crypto/crypto.entity';
 
 describe('CryptoService', () => {
   let service: CryptoService;

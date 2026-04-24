@@ -7,6 +7,7 @@ import { User } from './user/user.entity';
 import { Crypto } from './crypto/crypto.entity';
 import { AuthModule } from './auth/auth.module';
 import { CryptoModule } from './crypto/crypto.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -16,15 +17,20 @@ import { CryptoModule } from './crypto/crypto.module';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        type: 'sqlite',
-        database: configService.get<string>('DB_PATH', './database.sqlite'),
+        type: 'postgres',
+        host: configService.get<string>('DB_HOST', 'localhost'),
+        port: configService.get<number>('DB_PORT', 5432),
+        username: configService.get<string>('DB_USERNAME', 'postgres'),
+        password: configService.get<string>('DB_PASSWORD', 'password'),
+        database: configService.get<string>('DB_NAME', 'crypto_api'),
         entities: [User, Crypto],
-        synchronize: true, // Please note that this will be set to false in production
+        synchronize: true,
       }),
       inject: [ConfigService],
     }),
     AuthModule,
     CryptoModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

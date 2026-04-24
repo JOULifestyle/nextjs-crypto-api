@@ -16,11 +16,22 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       callbackURL: configService.get<string>('GOOGLE_CALLBACK_URL'),
       scope: ['email', 'profile'],
     });
+     // Temporary debug - remove after fixing
+  console.log('CLIENT_ID:', configService.get<string>('GOOGLE_CLIENT_ID'));
+  console.log('CALLBACK_URL:', configService.get<string>('GOOGLE_CALLBACK_URL'));
   }
 
-  async validate(accessToken: string, refreshToken: string, profile: any, done: VerifyCallback): Promise<any> {
+  async validate(
+    accessToken: string,
+    refreshToken: string,
+    profile: any,
+    done: VerifyCallback,
+  ): Promise<any> {
     const { emails, id } = profile;
-    const user = await this.authService.validateOAuthLogin(profile.id, emails[0].value);
+    const user = await this.authService.validateOAuthLogin(
+      profile.id,
+      emails[0].value,
+    );
     done(null, user);
   }
 }

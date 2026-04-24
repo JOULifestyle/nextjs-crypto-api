@@ -6,10 +6,7 @@ import { Crypto } from './crypto.entity';
 import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Crypto]),
-    HttpModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Crypto]), HttpModule],
   providers: [CryptoService],
   controllers: [CryptoController],
 })

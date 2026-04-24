@@ -9,12 +9,14 @@ import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './local.strategy';
 import { JwtStrategy } from './jwt.strategy';
 import { GoogleStrategy } from './google.strategy';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
     ConfigModule,
     TypeOrmModule.forFeature([User]),
     PassportModule,
+    EmailModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({

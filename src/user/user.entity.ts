@@ -8,15 +8,30 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column()
-  password: string;
+  @Column({ type: 'varchar', nullable: true })
+  password: string | null;
 
-  @Column({ nullable: true })
-  googleId: string;
+  @Column({ type: 'varchar', nullable: true })
+  googleId: string | null;
 
   @Column({ default: false })
   isSocial: boolean;
 
-  @Column({ nullable: true })
-  displayName: string;
+  @Column({ type: 'varchar', nullable: true })
+  displayName: string | null;
+
+  @Column({ default: false })
+  isVerified: boolean;
+
+  @Column({ type: 'varchar', nullable: true })
+  verificationToken: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  verificationTokenExpires: Date | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  resetPasswordToken: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  resetPasswordTokenExpires: Date | null;
 }
