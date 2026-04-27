@@ -23,84 +23,135 @@
 
 ## Description
 
-A NestJS-based REST API for cryptocurrency data with comprehensive user authentication. Features include email/password registration with email verification, password reset, Google OAuth login, fetching crypto data from CoinGecko, storing in PostgreSQL database, and serving data via protected endpoints.
+A NestJS-based REST API for cryptocurrency data with comprehensive user authentication. Features include email/password registration with email verification, password reset, Google OAuth login, fetching crypto data from CoinGecko, storing in PostgreSQL database, and serving data via protected endpoints with rate limiting.
 
 ## Project setup
 
 ```bash
-$ npm install
-$ cp .env.example .env
+# Copy example files and edit them
+cp .env.example .env                    # for development
+cp .env.example .env.production         # for production (then edit it)
 ```
 
-**Required Configuration:**
+### Environment Variables
 
-- Database: PostgreSQL connection details
-- Authentication: JWT secret and Google OAuth credentials
-- **Email: SMTP configuration for email verification and password reset**
+For Docker deployment, set these environment variables in `.env` (development) or `.env.production` (production):
 
-Edit `.env` with your actual values:
+### Example Environment Variables
 
-### Database
+```env
+# Database Configuration
+DB_HOST=localhost                    # Use 'db' for Docker, 'localhost' for local
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=your-secure-db-password  # Must match Docker setup
+DB_NAME=crypto_api
 
-- `DB_HOST`: PostgreSQL host (default: localhost)
-- `DB_PORT`: PostgreSQL port (default: 5432)
-- `DB_USERNAME`: PostgreSQL username (default: postgres)
-- `DB_PASSWORD`: PostgreSQL password
-- `DB_NAME`: PostgreSQL database name (default: crypto_api)
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 
-### Authentication
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
 
-- `JWT_SECRET`: A secure random string for JWT signing
-- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: From Google OAuth app
-- `GOOGLE_CALLBACK_URL`: Update if deploying (default for local dev)
+# Email Configuration (required for email verification and password reset)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASSWORD=your-app-password
+EMAIL_FROM=noreply@yourapp.com
+APP_URL=http://localhost:3000
 
-### Email (Required for email verification and password reset)
+# Application Configuration
+NODE_ENV=development                 # or 'production'
+PORT=3000
+```
 
-- `EMAIL_HOST`: SMTP host (default: smtp.gmail.com)
-- `EMAIL_PORT`: SMTP port (default: 587)
-- `EMAIL_USER`: SMTP username/email
-- `EMAIL_PASSWORD`: SMTP password (use App Password for Gmail)
-- `EMAIL_FROM`: From email address for sent emails
-- `APP_URL`: Base URL for email links (default: http://localhost:3000)
+## Quick Start with Docker
 
-**Note:** For Gmail, enable 2FA and create an "App Password" to use as EMAIL_PASSWORD.
-
-### App
-
-- `PORT`: Server port (default: 3000)
-
-## Compile and run the project
+### Development Setup
 
 ```bash
-# development
-$ npm run start
+# Clone the repository
+git clone <repository-url>
+cd nestjs-crypto-api
 
-# watch mode
-$ npm run start:dev
+# Copy environment file and edit with your values
+cp .env.example .env
 
-# production mode
-$ npm run start:prod
+# Start the application with Docker Compose
+npm run docker:dev
+# or
+docker-compose up --build
 ```
 
-## Run tests
+The application will be available at `http://localhost:3000`
+
+### Production Deployment
 
 ```bash
-# unit tests
-$ npm run test
+# Set environment variables in .env.production file
+cp .env.example .env.production
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+# Start production containers
+npm run docker:prod
+# or
+docker-compose -f docker-compose.prod.yml up --build -d
 ```
 
-## API Endpoints
+### Docker Commands
+
+```bash
+# Development
+npm run docker:dev          # Start development environment
+npm run docker:dev:down     # Stop development environment
+
+# Production
+npm run docker:prod         # Start production environment
+npm run docker:prod:down    # Stop production environment
+
+# Logs
+docker-compose logs -f app          # View app logs
+docker-compose logs -f db           # View database logs
+
+# Database access
+docker-compose exec db psql -U postgres -d crypto_api
+
+# Clean up
+npm run docker:clean               # Remove all containers and volumes
+```
+
+## Security Features
+
+- **Email verification required** for password accounts
+- **Secure token-based verification** (24h expiry for email verification, 1h for password reset)
+- **JWT tokens** for authenticated sessions
+- **Social login users** automatically verified
+- **Rate limiting** with @nestjs/throttler:
+  - Global: 10 requests per minute
+  - Registration: 5 requests per minute
+  - Login: 5 requests per 15 minutes
+  - Password reset: 3 requests per minute
+  - Email resend: 3 requests per minute
+
+### Rate Limiting
+
+When you exceed the rate limit, you'll receive:
+
+```json
+{
+  "statusCode": 429,
+  "error": "Too Many Requests",
+  "message": "Too many requests, please try again later."
+}
+```
+
+## Complete API Reference
 
 ### Authentication
 
 #### Registration & Login
-
 - `POST /auth/register` - Register user: `{ "email": "string", "password": "string", "displayName": "string" }`
   - Sends verification email automatically
   - User cannot login until email is verified
@@ -108,21 +159,21 @@ $ npm run test:cov
   - Requires email verification before login
 
 #### Email Verification
-
 - `POST /auth/verify-email` - Verify email: `{ "token": "string" }`
   - Token received via email after registration
 - `GET /auth/verify-email?token=<token>` - Verify email via link click
   - Returns HTML confirmation page
+- `POST /auth/resend-verification` - Resend verification: `{ "email": "string" }`
+  - For users who didn't receive the initial verification email
+  - Cannot be used by already verified or social login users
 
 #### Password Reset
-
 - `POST /auth/forgot-password` - Request password reset: `{ "email": "string" }`
   - Sends reset email if account exists
 - `POST /auth/reset-password` - Reset password: `{ "token": "string", "newPassword": "string" }`
   - Token received via email
 
 #### Google OAuth
-
 - `GET /auth/google` - Initiate Google OAuth login
 - `GET /auth/google/callback` - OAuth callback (handled automatically)
   - Social login users are automatically verified
@@ -130,40 +181,29 @@ $ npm run test:cov
 ## Authentication Flow
 
 ### Email/Password Registration
-
 1. User registers with email/password
 2. System sends verification email with token
 3. User clicks verification link → email verified
 4. User can now login with email/password
 
 ### Password Reset
-
 1. User requests password reset with email
 2. System sends reset email with token (if account exists)
 3. User clicks reset link or uses token in app
 4. User sets new password
 
 ### Google OAuth
-
 1. User clicks Google login
 2. Redirected to Google for authentication
 3. Google redirects back with user info
 4. User is automatically logged in and verified
 
-### Security Features
-
-- Email verification required for password accounts
-- Secure token-based verification (24h expiry)
-- Secure password reset (1h expiry)
-- JWT tokens for authenticated sessions
-- Social login users automatically verified
-
-### Crypto Data (Requires JWT in Authorization header)
+## Crypto Data (Requires JWT in Authorization header)
 
 - `POST /crypto/fetch` - Fetch and store top 10 cryptos from CoinGecko
 - `GET /crypto` - Get stored crypto data
 
-### Root
+## Root
 
 - `GET /` - Hello message
 

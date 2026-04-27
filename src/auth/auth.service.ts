@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  ConflictException,
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../user/user.entity';
@@ -11,6 +6,14 @@ import { JwtService } from '@nestjs/jwt';
 import { EmailService } from '../email/email.service';
 import * as bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
+
+// Types for better type safety
+export type UserWithoutSensitiveData = Omit<User, 'password' | 'verificationToken' | 'verificationTokenExpires' | 'resetPasswordToken' | 'resetPasswordTokenExpires'>;
+
+export interface LoginResponse {
+  access_token: string;
+  user: UserWithoutSensitiveData;
+}
 
 @Injectable()
 export class AuthService {
@@ -21,50 +24,24 @@ export class AuthService {
     private emailService: EmailService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
-    console.log('Validating user:', email, 'Password provided:', !!password);
+  async validateUser(email: string, password: string): Promise<UserWithoutSensitiveData | null> {
     const user = await this.userRepository.findOne({ where: { email } });
-    console.log(
-      'User found:',
-      !!user,
-      'Has password:',
-      !!user?.password,
-      'Is social:',
-      user?.isSocial,
-      'Is verified:',
-      user?.isVerified,
-    );
 
-    // Check if user exists and has a password (not social login)
     if (user && user.password && !user.isSocial) {
-      // Check if email is verified
       if (!user.isVerified) {
-        throw new BadRequestException(
-          'Please verify your email before logging in',
-        );
+        throw new BadRequestException('Please verify your email before logging in');
       }
 
       const isMatch = await bcrypt.compare(password, user.password);
-      console.log('Password match:', isMatch);
       if (isMatch) {
-        const {
-          password,
-          verificationToken,
-          verificationTokenExpires,
-          resetPasswordToken,
-          resetPasswordTokenExpires,
-          ...result
-        } = user;
+        const { password, verificationToken, verificationTokenExpires, resetPasswordToken, resetPasswordTokenExpires, ...result } = user;
         return result;
       }
     }
     return null;
   }
 
-  async validateOAuthLogin(
-    googleId: string | null,
-    email: string,
-  ): Promise<any> {
+  async validateOAuthLogin(googleId: string | null, email: string): Promise<UserWithoutSensitiveData> {
     let user = await this.userRepository.findOne({
       where: { googleId: googleId ?? undefined },
     });
@@ -78,13 +55,13 @@ export class AuthService {
           email,
           googleId: googleId ?? undefined,
           isSocial: true,
-          isVerified: true, // Social users are automatically verified
+          isVerified: true,
           password: null,
         });
       } else {
         user.googleId = googleId;
         user.isSocial = true;
-        user.isVerified = true; // Mark as verified when linking to Google
+        user.isVerified = true;
       }
       await this.userRepository.save(user);
     }
@@ -92,7 +69,7 @@ export class AuthService {
     return result;
   }
 
-  async login(user: any) {
+  async login(user: UserWithoutSensitiveData): Promise<LoginResponse> {
     const payload = { email: user.email, sub: user.id };
     return {
       access_token: this.jwtService.sign(payload),
@@ -100,11 +77,7 @@ export class AuthService {
     };
   }
 
-  async register(
-    email: string,
-    password: string,
-    displayName?: string,
-  ): Promise<any> {
+  async register(email: string, password: string, displayName?: string): Promise<UserWithoutSensitiveData> {
     const existing = await this.userRepository.findOne({ where: { email } });
 
     if (existing) {
@@ -113,10 +86,9 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Generate verification token
     const verificationToken = randomBytes(32).toString('hex');
     const verificationTokenExpires = new Date();
-    verificationTokenExpires.setHours(verificationTokenExpires.getHours() + 24); // 24 hours
+    verificationTokenExpires.setHours(verificationTokenExpires.getHours() + 24);
 
     const user = this.userRepository.create({
       email,
@@ -128,28 +100,19 @@ export class AuthService {
 
     await this.userRepository.save(user);
 
-    // Send verification email
     try {
       await this.emailService.sendVerificationEmail(email, verificationToken);
     } catch (error) {
       console.error('Failed to send verification email:', error);
-      // Don't fail registration if email fails, but log it
     }
 
-    const {
-      password: _,
-      verificationToken: __,
-      verificationTokenExpires: ___,
-      ...result
-    } = user;
+    const { password: _, verificationToken: __, verificationTokenExpires: ___, ...result } = user;
     return result;
   }
 
-  async verifyEmail(token: string): Promise<any> {
+  async verifyEmail(token: string): Promise<UserWithoutSensitiveData> {
     const user = await this.userRepository.findOne({
-      where: {
-        verificationToken: token,
-      },
+      where: { verificationToken: token },
     });
 
     if (!user) {
@@ -160,11 +123,7 @@ export class AuthService {
       throw new BadRequestException('Email is already verified');
     }
 
-    // Check if token is expired
-    if (
-      user.verificationTokenExpires &&
-      user.verificationTokenExpires < new Date()
-    ) {
+    if (user.verificationTokenExpires && user.verificationTokenExpires < new Date()) {
       throw new BadRequestException('Verification token has expired');
     }
 
@@ -174,38 +133,58 @@ export class AuthService {
 
     await this.userRepository.save(user);
 
-    const {
-      password,
-      verificationToken,
-      verificationTokenExpires,
-      resetPasswordToken,
-      resetPasswordTokenExpires,
-      ...result
-    } = user;
+    const { password, verificationToken, verificationTokenExpires, resetPasswordToken, resetPasswordTokenExpires, ...result } = user;
     return result;
+  }
+
+  async resendVerificationEmail(email: string): Promise<void> {
+    const user = await this.userRepository.findOne({ where: { email } });
+
+    if (!user) {
+      return;
+    }
+
+    if (user.isVerified) {
+      throw new BadRequestException('Email is already verified');
+    }
+
+    if (user.isSocial) {
+      throw new BadRequestException('Social login users are already verified');
+    }
+
+    const verificationToken = randomBytes(32).toString('hex');
+    const verificationTokenExpires = new Date();
+    verificationTokenExpires.setHours(verificationTokenExpires.getHours() + 24);
+
+    user.verificationToken = verificationToken;
+    user.verificationTokenExpires = verificationTokenExpires;
+
+    await this.userRepository.save(user);
+
+    try {
+      await this.emailService.sendVerificationEmail(email, verificationToken);
+    } catch (error) {
+      console.error('Failed to send verification email:', error);
+      throw new BadRequestException('Failed to send verification email');
+    }
   }
 
   async forgotPassword(email: string): Promise<void> {
     const user = await this.userRepository.findOne({ where: { email } });
 
     if (!user || user.isSocial) {
-      // Don't reveal if email exists or not for security
       return;
     }
 
-    // Generate reset token
     const resetPasswordToken = randomBytes(32).toString('hex');
     const resetPasswordTokenExpires = new Date();
-    resetPasswordTokenExpires.setHours(
-      resetPasswordTokenExpires.getHours() + 1,
-    ); // 1 hour
+    resetPasswordTokenExpires.setHours(resetPasswordTokenExpires.getHours() + 1);
 
     user.resetPasswordToken = resetPasswordToken;
     user.resetPasswordTokenExpires = resetPasswordTokenExpires;
 
     await this.userRepository.save(user);
 
-    // Send reset email
     try {
       await this.emailService.sendPasswordResetEmail(email, resetPasswordToken);
     } catch (error) {
@@ -214,26 +193,19 @@ export class AuthService {
     }
   }
 
-  async resetPassword(token: string, newPassword: string): Promise<any> {
+  async resetPassword(token: string, newPassword: string): Promise<UserWithoutSensitiveData> {
     const user = await this.userRepository.findOne({
-      where: {
-        resetPasswordToken: token,
-      },
+      where: { resetPasswordToken: token },
     });
 
     if (!user) {
       throw new BadRequestException('Invalid reset token');
     }
 
-    // Check if token is expired
-    if (
-      !user.resetPasswordTokenExpires ||
-      user.resetPasswordTokenExpires < new Date()
-    ) {
+    if (!user.resetPasswordTokenExpires || user.resetPasswordTokenExpires < new Date()) {
       throw new BadRequestException('Reset token has expired');
     }
 
-    // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     user.password = hashedPassword;
@@ -242,14 +214,7 @@ export class AuthService {
 
     await this.userRepository.save(user);
 
-    const {
-      password,
-      verificationToken,
-      verificationTokenExpires,
-      resetPasswordToken,
-      resetPasswordTokenExpires,
-      ...result
-    } = user;
+    const { password, verificationToken, verificationTokenExpires, resetPasswordToken, resetPasswordTokenExpires, ...result } = user;
     return result;
   }
 }

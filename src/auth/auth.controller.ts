@@ -10,22 +10,31 @@ import {
   BadRequestException,
   Query,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './local-auth.guard';
 import { GoogleAuthGuard } from './google-auth.guard';
 import { ResponseMessage } from '../shared/response.utils';
+import { UserWithoutSensitiveData, LoginResponse } from './auth.service';
 import {
   RegisterDto,
   LoginDto,
   VerifyEmailDto,
   ForgotPasswordDto,
+  ResendVerificationDto,
   ResetPasswordDto,
 } from './auth.dto';
+
+// Interface for authenticated requests
+interface AuthenticatedRequest {
+  user: UserWithoutSensitiveData;
+}
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute for registration
   @Post('register')
   async register(@Body() body: RegisterDto) {
     const user = await this.authService.register(
@@ -36,9 +45,10 @@ export class AuthController {
     return new ResponseMessage(true, { user }, 'User registered successfully');
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute for login
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Request() req) {
+  async login(@Request() req: AuthenticatedRequest) {
     const payload = await this.authService.login(req.user);
     return new ResponseMessage(true, payload, 'Login successful');
   }
@@ -51,7 +61,7 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
-  async googleAuthRedirect(@Request() req) {
+  async googleAuthRedirect(@Request() req: AuthenticatedRequest) {
     const payload = await this.authService.login(req.user);
     return new ResponseMessage(
       true,
@@ -86,6 +96,7 @@ export class AuthController {
     `;
   }
 
+  @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 requests per minute for password reset
   @Post('forgot-password')
   async forgotPassword(@Body() body: ForgotPasswordDto) {
     await this.authService.forgotPassword(body.email);
@@ -96,12 +107,20 @@ export class AuthController {
     );
   }
 
+  @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 requests per minute for resend verification
+  @Post('resend-verification')
+  async resendVerification(@Body() body: ResendVerificationDto) {
+    await this.authService.resendVerificationEmail(body.email);
+    return new ResponseMessage(
+      true,
+      null,
+      'Verification email has been resent',
+    );
+  }
+
   @Post('reset-password')
   async resetPassword(@Body() body: ResetPasswordDto) {
-    const user = await this.authService.resetPassword(
-      body.token,
-      body.newPassword,
-    );
+    const user = await this.authService.resetPassword(body.token, body.newPassword);
     return new ResponseMessage(true, { user }, 'Password reset successfully');
   }
 }
