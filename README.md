@@ -23,7 +23,7 @@
 
 ## Description
 
-A NestJS-based REST API for cryptocurrency data with comprehensive user authentication. Features include email/password registration with email verification, password reset, Google OAuth login, fetching crypto data from CoinGecko, storing in PostgreSQL database, and serving data via protected endpoints with rate limiting.
+A NestJS-based REST API for cryptocurrency data with comprehensive user authentication. Features include email/password registration with email verification, password reset, Google OAuth login, JWT refresh tokens for secure session management, fetching crypto data from CoinGecko, storing in PostgreSQL database, and serving data via protected endpoints with rate limiting.
 
 ## Project setup
 
@@ -49,6 +49,7 @@ DB_NAME=crypto_api
 
 # JWT Configuration
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+JWT_REFRESH_SECRET=your-refresh-token-secret-change-this-in-production  # Optional, defaults to JWT_SECRET
 
 # Google OAuth Configuration
 GOOGLE_CLIENT_ID=your-google-client-id
@@ -126,7 +127,7 @@ npm run docker:clean               # Remove all containers and volumes
 
 - **Email verification required** for password accounts
 - **Secure token-based verification** (24h expiry for email verification, 1h for password reset)
-- **JWT tokens** for authenticated sessions
+- **JWT tokens** for authenticated sessions (access token expires in 60 minutes, refresh token expires in 7 days)
 - **Social login users** automatically verified
 - **Rate limiting** with @nestjs/throttler:
   - Global: 10 requests per minute
@@ -155,8 +156,12 @@ When you exceed the rate limit, you'll receive:
 - `POST /auth/register` - Register user: `{ "email": "string", "password": "string", "displayName": "string" }`
   - Sends verification email automatically
   - User cannot login until email is verified
-- `POST /auth/login` - Login: `{ "email": "string", "password": "string" }` → Returns JWT
+- `POST /auth/login` - Login: `{ "email": "string", "password": "string" }` → Returns access_token and refresh_token
   - Requires email verification before login
+  - Access token expires in 60 minutes, refresh token expires in 7 days
+- `POST /auth/refresh` - Refresh tokens: Use refresh_token in Authorization header → Returns new access_token and refresh_token
+  - Generates new token pair and invalidates the old refresh token (token rotation)
+- `POST /auth/logout` - Logout: Requires JWT in Authorization header → Logs out user by invalidating tokens
 
 #### Email Verification
 - `POST /auth/verify-email` - Verify email: `{ "token": "string" }`
@@ -197,6 +202,12 @@ When you exceed the rate limit, you'll receive:
 2. Redirected to Google for authentication
 3. Google redirects back with user info
 4. User is automatically logged in and verified
+
+### Token Refresh
+1. When access token expires, use refresh token to get new tokens
+2. Send POST request to `/auth/refresh` with refresh token in Authorization header
+3. Receive new access_token and refresh_token pair
+4. Old refresh token is invalidated for security (token rotation)
 
 ## Crypto Data (Requires JWT in Authorization header)
 

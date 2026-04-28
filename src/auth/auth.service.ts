@@ -1,19 +1,18 @@
-import { Injectable, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../user/user.entity';
 import { JwtService } from '@nestjs/jwt';
 import { EmailService } from '../email/email.service';
+import { TokenBlocklistService } from './token-blocklist.service';
 import * as bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
-
-// Types for better type safety
-export type UserWithoutSensitiveData = Omit<User, 'password' | 'verificationToken' | 'verificationTokenExpires' | 'resetPasswordToken' | 'resetPasswordTokenExpires'>;
-
-export interface LoginResponse {
-  access_token: string;
-  user: UserWithoutSensitiveData;
-}
+import type { UserWithoutSensitiveData, LoginResponse } from '../types';
 
 @Injectable()
 export class AuthService {
@@ -22,26 +21,42 @@ export class AuthService {
     private userRepository: Repository<User>,
     private jwtService: JwtService,
     private emailService: EmailService,
+    private tokenBlocklistService: TokenBlocklistService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<UserWithoutSensitiveData | null> {
+  async validateUser(
+    email: string,
+    password: string,
+  ): Promise<UserWithoutSensitiveData | null> {
     const user = await this.userRepository.findOne({ where: { email } });
 
     if (user && user.password && !user.isSocial) {
       if (!user.isVerified) {
-        throw new BadRequestException('Please verify your email before logging in');
+        throw new BadRequestException(
+          'Please verify your email before logging in',
+        );
       }
 
       const isMatch = await bcrypt.compare(password, user.password);
       if (isMatch) {
-        const { password, verificationToken, verificationTokenExpires, resetPasswordToken, resetPasswordTokenExpires, ...result } = user;
+        const {
+          password,
+          verificationToken,
+          verificationTokenExpires,
+          resetPasswordToken,
+          resetPasswordTokenExpires,
+          ...result
+        } = user;
         return result;
       }
     }
     return null;
   }
 
-  async validateOAuthLogin(googleId: string | null, email: string): Promise<UserWithoutSensitiveData> {
+  async validateOAuthLogin(
+    googleId: string | null,
+    email: string,
+  ): Promise<UserWithoutSensitiveData> {
     let user = await this.userRepository.findOne({
       where: { googleId: googleId ?? undefined },
     });
@@ -69,23 +84,32 @@ export class AuthService {
     return result;
   }
 
-  async login(user: UserWithoutSensitiveData): Promise<LoginResponse> {
-    const payload = { email: user.email, sub: user.id };
-    return {
-      access_token: this.jwtService.sign(payload),
-      user,
-    };
-  }
+  async register(
+    email: string,
+    password: string,
+    displayName?: string,
+  ): Promise<UserWithoutSensitiveData> {
+    const existingUser = await this.userRepository.findOne({
+      where: { email },
+    });
 
-  async register(email: string, password: string, displayName?: string): Promise<UserWithoutSensitiveData> {
-    const existing = await this.userRepository.findOne({ where: { email } });
-
-    if (existing) {
-      throw new ConflictException('Email already in use');
+    if (existingUser) {
+      if (existingUser.isSocial) {
+        throw new ConflictException(
+          'Email is already registered with social login. Please use Google login.',
+        );
+      }
+      if (existingUser.isVerified) {
+        throw new ConflictException('Email is already registered and verified');
+      }
+      // If not verified, resend verification instead of creating new
+      await this.resendVerificationEmail(email);
+      throw new BadRequestException(
+        'Email is already registered but not verified. Verification email has been resent.',
+      );
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const verificationToken = randomBytes(32).toString('hex');
     const verificationTokenExpires = new Date();
     verificationTokenExpires.setHours(verificationTokenExpires.getHours() + 24);
@@ -93,7 +117,7 @@ export class AuthService {
     const user = this.userRepository.create({
       email,
       password: hashedPassword,
-      displayName: displayName ?? undefined,
+      displayName: displayName || null,
       verificationToken,
       verificationTokenExpires,
     });
@@ -104,12 +128,111 @@ export class AuthService {
       await this.emailService.sendVerificationEmail(email, verificationToken);
     } catch (error) {
       console.error('Failed to send verification email:', error);
+      throw new BadRequestException('Failed to send verification email');
     }
 
-    const { password: _, verificationToken: __, verificationTokenExpires: ___, ...result } = user;
+    const {
+      password: _,
+      verificationToken: __,
+      verificationTokenExpires: ___,
+      resetPasswordToken,
+      resetPasswordTokenExpires,
+      refreshToken,
+      refreshTokenExpires,
+      ...result
+    } = user;
     return result;
   }
 
+  async login(user: UserWithoutSensitiveData): Promise<LoginResponse> {
+    const payload = { email: user.email, sub: user.id };
+
+    // Generate access token (short-lived)
+    const accessToken = this.jwtService.sign(payload);
+
+    // Generate refresh token (long-lived)
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
+      expiresIn: '7d', // 7 days
+    });
+
+    // Store refresh token in database
+    const refreshTokenExpires = new Date();
+    refreshTokenExpires.setDate(refreshTokenExpires.getDate() + 7); // 7 days
+
+    await this.userRepository.update(user.id, {
+      refreshToken,
+      refreshTokenExpires,
+    });
+
+    return {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      user,
+    };
+  }
+
+  async logout(userId: number, accessToken: string): Promise<void> {
+    this.tokenBlocklistService.add(accessToken);
+    await this.userRepository.update(userId, {
+      refreshToken: null,
+      refreshTokenExpires: null,
+    });
+  }
+
+  async refreshToken(
+    userId: number,
+    email: string,
+    oldAccessToken?: string,
+  ): Promise<LoginResponse> {
+    if (oldAccessToken) {
+      this.tokenBlocklistService.add(oldAccessToken);
+    }
+    const user = await this.userRepository.findOne({
+      where: { id: userId, email },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const payload = { email: user.email, sub: user.id };
+
+    // Generate new access token
+    const accessToken = this.jwtService.sign(payload);
+
+    // Generate new refresh token (token rotation)
+    const newRefreshToken = this.jwtService.sign(payload, {
+      secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
+      expiresIn: '7d',
+    });
+
+    // Update refresh token in database
+    const newRefreshTokenExpires = new Date();
+    newRefreshTokenExpires.setDate(newRefreshTokenExpires.getDate() + 7);
+
+    await this.userRepository.update(user.id, {
+      refreshToken: newRefreshToken,
+      refreshTokenExpires: newRefreshTokenExpires,
+    });
+
+    const {
+      password,
+      verificationToken,
+      verificationTokenExpires,
+      resetPasswordToken,
+      resetPasswordTokenExpires,
+      refreshToken,
+      refreshTokenExpires,
+      ...result
+    } = user;
+
+    return {
+      access_token: accessToken,
+      refresh_token: newRefreshToken,
+      user: result,
+    };
+  }
   async verifyEmail(token: string): Promise<UserWithoutSensitiveData> {
     const user = await this.userRepository.findOne({
       where: { verificationToken: token },
@@ -123,7 +246,10 @@ export class AuthService {
       throw new BadRequestException('Email is already verified');
     }
 
-    if (user.verificationTokenExpires && user.verificationTokenExpires < new Date()) {
+    if (
+      user.verificationTokenExpires &&
+      user.verificationTokenExpires < new Date()
+    ) {
       throw new BadRequestException('Verification token has expired');
     }
 
@@ -133,7 +259,14 @@ export class AuthService {
 
     await this.userRepository.save(user);
 
-    const { password, verificationToken, verificationTokenExpires, resetPasswordToken, resetPasswordTokenExpires, ...result } = user;
+    const {
+      password,
+      verificationToken,
+      verificationTokenExpires,
+      resetPasswordToken,
+      resetPasswordTokenExpires,
+      ...result
+    } = user;
     return result;
   }
 
@@ -178,7 +311,9 @@ export class AuthService {
 
     const resetPasswordToken = randomBytes(32).toString('hex');
     const resetPasswordTokenExpires = new Date();
-    resetPasswordTokenExpires.setHours(resetPasswordTokenExpires.getHours() + 1);
+    resetPasswordTokenExpires.setHours(
+      resetPasswordTokenExpires.getHours() + 1,
+    );
 
     user.resetPasswordToken = resetPasswordToken;
     user.resetPasswordTokenExpires = resetPasswordTokenExpires;
@@ -193,7 +328,10 @@ export class AuthService {
     }
   }
 
-  async resetPassword(token: string, newPassword: string): Promise<UserWithoutSensitiveData> {
+  async resetPassword(
+    token: string,
+    newPassword: string,
+  ): Promise<UserWithoutSensitiveData> {
     const user = await this.userRepository.findOne({
       where: { resetPasswordToken: token },
     });
@@ -202,7 +340,10 @@ export class AuthService {
       throw new BadRequestException('Invalid reset token');
     }
 
-    if (!user.resetPasswordTokenExpires || user.resetPasswordTokenExpires < new Date()) {
+    if (
+      !user.resetPasswordTokenExpires ||
+      user.resetPasswordTokenExpires < new Date()
+    ) {
       throw new BadRequestException('Reset token has expired');
     }
 
@@ -214,7 +355,14 @@ export class AuthService {
 
     await this.userRepository.save(user);
 
-    const { password, verificationToken, verificationTokenExpires, resetPasswordToken, resetPasswordTokenExpires, ...result } = user;
+    const {
+      password,
+      verificationToken,
+      verificationTokenExpires,
+      resetPasswordToken,
+      resetPasswordTokenExpires,
+      ...result
+    } = user;
     return result;
   }
 }

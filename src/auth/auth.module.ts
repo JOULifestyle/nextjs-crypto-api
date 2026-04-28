@@ -9,7 +9,9 @@ import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './local.strategy';
 import { JwtStrategy } from './jwt.strategy';
 import { GoogleStrategy } from './google.strategy';
+import { RefreshTokenStrategy } from './refresh-token.strategy';
 import { EmailModule } from '../email/email.module';
+import { TokenBlocklistService } from './token-blocklist.service';
 
 @Module({
   imports: [
@@ -21,13 +23,20 @@ import { EmailModule } from '../email/email.module';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '60m' },
+        signOptions: { expiresIn: '15m' },
       }),
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, LocalStrategy, JwtStrategy, GoogleStrategy],
+  providers: [
+    AuthService,
+    TokenBlocklistService,
+    LocalStrategy,
+    JwtStrategy,
+    GoogleStrategy,
+    RefreshTokenStrategy,
+  ],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, TokenBlocklistService],
 })
 export class AuthModule {}

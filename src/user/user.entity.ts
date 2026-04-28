@@ -34,4 +34,10 @@ export class User {
 
   @Column({ type: 'timestamp', nullable: true })
   resetPasswordTokenExpires: Date | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  refreshToken: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  refreshTokenExpires: Date | null;
 }

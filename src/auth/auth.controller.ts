@@ -5,30 +5,26 @@ import {
   UseGuards,
   Request,
   Get,
-  HttpException,
-  HttpStatus,
   BadRequestException,
   Query,
 } from '@nestjs/common';
+import { Request as ExpressRequest } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './local-auth.guard';
 import { GoogleAuthGuard } from './google-auth.guard';
+import { RefreshTokenGuard } from './refresh-token.guard';
 import { ResponseMessage } from '../shared/response.utils';
-import { UserWithoutSensitiveData, LoginResponse } from './auth.service';
+import type { UserWithoutSensitiveData } from '../types';
 import {
   RegisterDto,
-  LoginDto,
   VerifyEmailDto,
   ForgotPasswordDto,
   ResendVerificationDto,
   ResetPasswordDto,
 } from './auth.dto';
-
-// Interface for authenticated requests
-interface AuthenticatedRequest {
-  user: UserWithoutSensitiveData;
-}
+import { JwtAuthGuard } from './jwt-auth.guard';
+import type { AuthenticatedRequest } from '../types';
 
 @Controller('auth')
 export class AuthController {
@@ -51,6 +47,19 @@ export class AuthController {
   async login(@Request() req: AuthenticatedRequest) {
     const payload = await this.authService.login(req.user);
     return new ResponseMessage(true, payload, 'Login successful');
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute for token refresh
+  @UseGuards(RefreshTokenGuard)
+  @Post('refresh')
+  async refresh(@Request() req: AuthenticatedRequest) {
+    const oldAccessToken = req.headers['authorization']?.split(' ')[1];
+    const payload = await this.authService.refreshToken(
+      req.user.id,
+      req.user.email,
+      oldAccessToken,
+    );
+    return new ResponseMessage(true, payload, 'Token refreshed successfully');
   }
 
   @Get('google')
@@ -81,7 +90,7 @@ export class AuthController {
     if (!token) {
       throw new BadRequestException('Token is required');
     }
-    const user = await this.authService.verifyEmail(token);
+    await this.authService.verifyEmail(token);
     // For GET requests, return a simple HTML response
     return `
       <html>
@@ -120,7 +129,21 @@ export class AuthController {
 
   @Post('reset-password')
   async resetPassword(@Body() body: ResetPasswordDto) {
-    const user = await this.authService.resetPassword(body.token, body.newPassword);
+    const user = await this.authService.resetPassword(
+      body.token,
+      body.newPassword,
+    );
     return new ResponseMessage(true, { user }, 'Password reset successfully');
   }
+
+@UseGuards(JwtAuthGuard)
+@Post('logout')
+async logout(@Request() req: AuthenticatedRequest) {
+  const token = req.headers['authorization']?.split(' ')[1];
+  if (!token) {
+    throw new BadRequestException('No token provided');
+  }
+  await this.authService.logout(req.user.id, token);
+  return new ResponseMessage(true, null, 'Logged out successfully');
+}
 }

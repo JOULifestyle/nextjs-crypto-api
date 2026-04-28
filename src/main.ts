@@ -4,7 +4,6 @@ import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
-  console.log('CLIENT_ID:', process.env.GOOGLE_CLIENT_ID); 
   const app = await NestFactory.create(AppModule);
   app.use(cookieParser());
   app.enableCors({
