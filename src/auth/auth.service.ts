@@ -45,6 +45,8 @@ export class AuthService {
           verificationTokenExpires,
           resetPasswordToken,
           resetPasswordTokenExpires,
+          refreshToken,
+          refreshTokenExpires,
           ...result
         } = user;
         return result;
@@ -80,7 +82,15 @@ export class AuthService {
       }
       await this.userRepository.save(user);
     }
-    const { password, ...result } = user;
+    const { password,
+      verificationToken,
+  verificationTokenExpires,
+  resetPasswordToken,
+  resetPasswordTokenExpires,
+  refreshToken,
+  refreshTokenExpires,
+      ...result
+    } = user;
     return result;
   }
 

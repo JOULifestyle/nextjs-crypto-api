@@ -148,6 +148,16 @@ When you exceed the rate limit, you'll receive:
 }
 ```
 
+## API Documentation
+
+The API documentation is available via Swagger UI at `http://localhost:3000/api` when the application is running.
+
+The documentation includes:
+- Interactive API testing
+- Request/response examples
+- Authentication with JWT tokens
+- Detailed endpoint descriptions
+
 ## Complete API Reference
 
 ### Authentication

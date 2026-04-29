@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from '../src/auth/auth.service';
 import { JwtService } from '@nestjs/jwt';
 import { EmailService } from '../src/email/email.service';
+import { TokenBlocklistService } from '../src/auth/token-blocklist.service';
 import { ConfigModule } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { User } from '../src/user/user.entity';
@@ -39,6 +40,13 @@ describe('AuthService', () => {
           useValue: {
             sendVerificationEmail: jest.fn(),
             sendPasswordResetEmail: jest.fn(),
+          },
+        },
+        {
+          provide: TokenBlocklistService,
+          useValue: {
+            add: jest.fn(),
+            isBlocked: jest.fn().mockReturnValue(false),
           },
         },
       ],
