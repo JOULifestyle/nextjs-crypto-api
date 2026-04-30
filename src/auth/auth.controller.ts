@@ -93,8 +93,10 @@ export class AuthController {
 
   @Get('google')
   @UseGuards(GoogleAuthGuard)
-  @ApiOperation({ summary: 'Initiate Google OAuth login' })
-  @ApiResponse({ status: 302, description: 'Redirect to Google OAuth' })
+  @ApiOperation({ summary: 'Initiate Google OAuth login',
+    description: 'Redirects to Google OAuth. Must be tested in a browser, not Swagger UI.'
+   })
+  @ApiResponse({ status: 302, description: 'Redirect to Google OAuth. Must be tested in a browser, not Swagger UI.' })
   async googleAuth() {
     // Passport will handle the redirect to Google OAuth
   }

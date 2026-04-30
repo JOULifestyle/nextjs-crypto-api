@@ -26,6 +26,7 @@ async function bootstrap() {
     .setVersion('1.0')
     .addTag('auth', 'Authentication endpoints')
     .addTag('crypto', 'Cryptocurrency data endpoints')
+    .addTag('favorites', 'User favorites management')
     .addBearerAuth(
       {
         type: 'http',

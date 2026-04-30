@@ -10,6 +10,9 @@ import { Crypto } from './crypto/crypto.entity';
 import { AuthModule } from './auth/auth.module';
 import { CryptoModule } from './crypto/crypto.module';
 import { EmailModule } from './email/email.module';
+import { FavoritesModule } from './favorites/favorites.module';
+import { Favorite } from './favorites/favorite.entity';
+
 
 @Module({
   imports: [
@@ -31,7 +34,7 @@ import { EmailModule } from './email/email.module';
         username: configService.get<string>('DB_USERNAME', 'postgres'),
         password: configService.get<string>('DB_PASSWORD', ''),
         database: configService.get<string>('DB_NAME', 'crypto_api'),
-        entities: [User, Crypto],
+        entities: [User, Crypto, Favorite],
         synchronize: true,
       }),
       inject: [ConfigService],
@@ -39,6 +42,7 @@ import { EmailModule } from './email/email.module';
     AuthModule,
     CryptoModule,
     EmailModule,
+    FavoritesModule,
   ],
   controllers: [AppController],
   providers: [

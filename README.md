@@ -84,7 +84,7 @@ cp .env.example .env
 # Start the application with Docker Compose
 npm run docker:dev
 # or
-docker-compose up --build
+docker compose up --build
 ```
 
 The application will be available at `http://localhost:3000`
@@ -98,7 +98,7 @@ cp .env.example .env.production
 # Start production containers
 npm run docker:prod
 # or
-docker-compose -f docker-compose.prod.yml up --build -d
+docker compose -f docker-compose.prod.yml up --build -d
 ```
 
 ### Docker Commands
@@ -113,11 +113,11 @@ npm run docker:prod         # Start production environment
 npm run docker:prod:down    # Stop production environment
 
 # Logs
-docker-compose logs -f app          # View app logs
-docker-compose logs -f db           # View database logs
+docker compose logs -f app          # View app logs
+docker compose logs -f db           # View database logs
 
 # Database access
-docker-compose exec db psql -U postgres -d crypto_api
+docker compose exec db psql -U postgres -d crypto_api
 
 # Clean up
 npm run docker:clean               # Remove all containers and volumes
@@ -223,6 +223,14 @@ The documentation includes:
 
 - `POST /crypto/fetch` - Fetch and store top 10 cryptos from CoinGecko
 - `GET /crypto` - Get stored crypto data
+
+## Favorites (Requires JWT in Authorization header)
+
+User favorites for cryptocurrencies. Allows users to save and manage their favorite cryptocurrencies.
+
+- `POST /favorites/:cryptoId` - Add a cryptocurrency to favorites
+- `DELETE /favorites/:cryptoId` - Remove a cryptocurrency from favorites
+- `GET /favorites` - Get all favorite cryptocurrencies for the current user
 
 ## Root
 
