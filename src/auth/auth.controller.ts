@@ -57,15 +57,15 @@ export class AuthController {
   @Post('login')
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiBody({
-  schema: {
-    type: 'object',
-    required: ['email', 'password'],
-    properties: {
-      email: { type: 'string', example: 'user@example.com' },
-      password: { type: 'string', example: 'password123' },
+    schema: {
+      type: 'object',
+      required: ['email', 'password'],
+      properties: {
+        email: { type: 'string', example: 'user@example.com' },
+        password: { type: 'string', example: 'password123' },
+      },
     },
-  },
-})
+  })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @ApiResponse({ status: 400, description: 'Email not verified' })
@@ -93,10 +93,16 @@ export class AuthController {
 
   @Get('google')
   @UseGuards(GoogleAuthGuard)
-  @ApiOperation({ summary: 'Initiate Google OAuth login',
-    description: 'Redirects to Google OAuth. Must be tested in a browser, not Swagger UI.'
-   })
-  @ApiResponse({ status: 302, description: 'Redirect to Google OAuth. Must be tested in a browser, not Swagger UI.' })
+  @ApiOperation({
+    summary: 'Initiate Google OAuth login',
+    description:
+      'Redirects to Google OAuth. Must be tested in a browser, not Swagger UI.',
+  })
+  @ApiResponse({
+    status: 302,
+    description:
+      'Redirect to Google OAuth. Must be tested in a browser, not Swagger UI.',
+  })
   async googleAuth() {
     // Passport will handle the redirect to Google OAuth
   }
@@ -149,7 +155,10 @@ export class AuthController {
   @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 requests per minute for password reset
   @Post('forgot-password')
   @ApiOperation({ summary: 'Request password reset' })
-  @ApiResponse({ status: 200, description: 'Reset email sent if account exists' })
+  @ApiResponse({
+    status: 200,
+    description: 'Reset email sent if account exists',
+  })
   @ApiResponse({ status: 400, description: 'Validation error' })
   async forgotPassword(@Body() body: ForgotPasswordDto) {
     await this.authService.forgotPassword(body.email);
@@ -164,7 +173,10 @@ export class AuthController {
   @Post('resend-verification')
   @ApiOperation({ summary: 'Resend email verification' })
   @ApiResponse({ status: 200, description: 'Verification email resent' })
-  @ApiResponse({ status: 400, description: 'Email already verified or social login' })
+  @ApiResponse({
+    status: 400,
+    description: 'Email already verified or social login',
+  })
   async resendVerification(@Body() body: ResendVerificationDto) {
     await this.authService.resendVerificationEmail(body.email);
     return new ResponseMessage(
@@ -193,11 +205,11 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Logged out successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async logout(@Request() req: AuthenticatedRequest) {
-  const token = req.headers['authorization']?.split(' ')[1];
-  if (!token) {
-    throw new BadRequestException('No token provided');
+    const token = req.headers['authorization']?.split(' ')[1];
+    if (!token) {
+      throw new BadRequestException('No token provided');
+    }
+    await this.authService.logout(req.user.id, token);
+    return new ResponseMessage(true, null, 'Logged out successfully');
   }
-  await this.authService.logout(req.user.id, token);
-  return new ResponseMessage(true, null, 'Logged out successfully');
-}
 }

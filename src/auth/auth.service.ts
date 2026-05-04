@@ -82,13 +82,14 @@ export class AuthService {
       }
       await this.userRepository.save(user);
     }
-    const { password,
+    const {
+      password,
       verificationToken,
-  verificationTokenExpires,
-  resetPasswordToken,
-  resetPasswordTokenExpires,
-  refreshToken,
-  refreshTokenExpires,
+      verificationTokenExpires,
+      resetPasswordToken,
+      resetPasswordTokenExpires,
+      refreshToken,
+      refreshTokenExpires,
       ...result
     } = user;
     return result;
