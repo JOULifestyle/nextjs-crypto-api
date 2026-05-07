@@ -32,7 +32,7 @@ export class FavoritesController {
   @ApiResponse({ status: 409, description: 'Already in favorites' })
   async addFavorite(
     @Request() req: AuthenticatedRequest,
-    @Param('cryptoId', ParseIntPipe) cryptoId: number,
+    @Param('cryptoId') cryptoId: string,
   ) {
     const favorite = await this.favoritesService.addFavorite(
       req.user.id,
@@ -47,7 +47,7 @@ export class FavoritesController {
   @ApiResponse({ status: 404, description: 'Favorite not found' })
   async removeFavorite(
     @Request() req: AuthenticatedRequest,
-    @Param('cryptoId', ParseIntPipe) cryptoId: number,
+    @Param('cryptoId') cryptoId: string,
   ) {
     await this.favoritesService.removeFavorite(req.user.id, cryptoId);
     return { success: true, data: null, message: 'Removed from favorites' };

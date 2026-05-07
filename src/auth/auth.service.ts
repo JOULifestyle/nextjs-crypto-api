@@ -138,8 +138,10 @@ export class AuthService {
     try {
       await this.emailService.sendVerificationEmail(email, verificationToken);
     } catch (error) {
+      // Log the error for monitoring/debugging
       console.error('Failed to send verification email:', error);
-      throw new BadRequestException('Failed to send verification email');
+      // TODO: Queue for retry mechanism (e.g., add to Redis queue for background retry)
+      // This maintains non-blocking registration while ensuring delivery attempts
     }
 
     const {
@@ -212,8 +214,14 @@ export class AuthService {
     // Generate new access token
     const accessToken = this.jwtService.sign(payload);
 
-    // Generate new refresh token (token rotation)
-    const newRefreshToken = this.jwtService.sign(payload, {
+    // Generate new refresh token with unique identifier for token rotation
+    const refreshPayload = {
+      ...payload,
+      iat: Math.floor(Date.now() / 1000),
+      jti: randomBytes(16).toString('hex'), // Unique token identifier for rotation
+      type: 'refresh',
+    };
+    const newRefreshToken = this.jwtService.sign(refreshPayload, {
       secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
       expiresIn: '7d',
     });
@@ -276,6 +284,8 @@ export class AuthService {
       verificationTokenExpires,
       resetPasswordToken,
       resetPasswordTokenExpires,
+      refreshToken,      
+  refreshTokenExpires, 
       ...result
     } = user;
     return result;
@@ -372,6 +382,8 @@ export class AuthService {
       verificationTokenExpires,
       resetPasswordToken,
       resetPasswordTokenExpires,
+      refreshToken,
+    refreshTokenExpires,
       ...result
     } = user;
     return result;

@@ -23,6 +23,7 @@ import { RefreshTokenGuard } from './refresh-token.guard';
 import { ResponseMessage } from '../shared/response.utils';
 import type { UserWithoutSensitiveData } from '../types';
 import {
+  LoginDto,
   RegisterDto,
   VerifyEmailDto,
   ForgotPasswordDto,
@@ -55,18 +56,10 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute for login
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  @ApiOperation({ summary: 'Login with email and password' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      required: ['email', 'password'],
-      properties: {
-        email: { type: 'string', example: 'user@example.com' },
-        password: { type: 'string', example: 'password123' },
-      },
-    },
-  })
-  @ApiResponse({ status: 200, description: 'Login successful' })
+  @Throttle({ default: { limit: 5, ttl: 900000 } }) // 5 requests per 15 minutes for login
+  @ApiOperation({ summary: 'Login user' })
+  @ApiBody({ type: LoginDto })
+  @ApiResponse({ status: 201, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @ApiResponse({ status: 400, description: 'Email not verified' })
   async login(@Request() req: AuthenticatedRequest) {
@@ -79,7 +72,7 @@ export class AuthController {
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token using refresh token' })
   @ApiBearerAuth('JWT-auth')
-  @ApiResponse({ status: 200, description: 'Token refreshed successfully' })
+  @ApiResponse({ status: 201, description: 'Token refreshed successfully' })
   @ApiResponse({ status: 401, description: 'Invalid refresh token' })
   async refresh(@Request() req: AuthenticatedRequest) {
     const oldAccessToken = req.headers['authorization']?.split(' ')[1];
@@ -122,7 +115,7 @@ export class AuthController {
 
   @Post('verify-email')
   @ApiOperation({ summary: 'Verify email using token' })
-  @ApiResponse({ status: 200, description: 'Email verified successfully' })
+  @ApiResponse({ status: 201, description: 'Email verified successfully' })
   @ApiResponse({ status: 400, description: 'Invalid or expired token' })
   async verifyEmail(@Body() body: VerifyEmailDto) {
     const user = await this.authService.verifyEmail(body.token);

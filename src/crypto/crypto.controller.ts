@@ -1,5 +1,6 @@
 import { Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { CryptoService } from './crypto.service';
+import { Crypto as CryptoEntity } from './crypto.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import {
   ApiTags,
@@ -30,7 +31,7 @@ export class CryptoController {
   @ApiOperation({ summary: 'Get stored cryptocurrency data' })
   @ApiResponse({ status: 200, description: 'Crypto data retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getCryptoData() {
+  async getCryptoData(): Promise<CryptoEntity[]> {
     return this.cryptoService.getCryptoData();
   }
 }

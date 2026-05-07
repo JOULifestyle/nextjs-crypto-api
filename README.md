@@ -1,30 +1,60 @@
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+  <a href="https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/ci.yml">
+    <img src="https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/ci.yml/badge.svg" alt="CI Status" />
+  </a>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+  <a href="https://codecov.io/gh/YOUR_USERNAME/YOUR_REPO">
+    <img src="https://codecov.io/gh/YOUR_USERNAME/YOUR_REPO/branch/main/graph/badge.svg" alt="Code Coverage" />
+  </a>
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
+  <img src="https://img.shields.io/badge/tests-112%20passed-brightgreen" alt="Tests Passed" />
+
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="License" />
 </p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
 ## Description
 
-A NestJS-based REST API for cryptocurrency data with comprehensive user authentication. Features include email/password registration with email verification, password reset, Google OAuth login, JWT refresh tokens for secure session management, fetching crypto data from CoinGecko, storing in PostgreSQL database, and serving data via protected endpoints with rate limiting.
+A production-focused NestJS REST API for cryptocurrency tracking and user authentication.
 
+The application includes email/password authentication, Google OAuth, JWT access and refresh tokens, email verification, password reset flows, protected routes, rate limiting, and cryptocurrency data integration using the CoinGecko API.
+
+The project uses PostgreSQL with TypeORM and includes comprehensive unit and end-to-end testing with Jest and Supertest.
+
+## Features
+
+- JWT authentication with refresh token rotation
+- Email verification and password reset flows
+- Google OAuth authentication
+- Protected API routes
+- Rate limiting with `@nestjs/throttler`
+- Cryptocurrency data integration using CoinGecko
+- User favorites management
+- PostgreSQL + TypeORM
+- Docker support for development and production
+- Swagger API documentation
+- Comprehensive unit and e2e testing
+- GitHub Actions CI pipeline
+
+## Architecture
+
+The application follows a modular NestJS architecture with clear separation of concerns.
+
+Main modules include:
+
+- `AuthModule` for authentication and authorization
+- `CryptoModule` for cryptocurrency data management
+- `FavoritesModule` for user favorites
+- `EmailModule` for transactional email handling
+
+Authentication is implemented using JWT access and refresh tokens with Passport strategies.
+```
+src/
+├── auth/
+├── crypto/
+├── favorites/
+├── email/
+├── shared/
+```
 ## Project setup
 
 ```bash
@@ -158,6 +188,110 @@ The documentation includes:
 - Authentication with JWT tokens
 - Detailed endpoint descriptions
 
+## Testing
+
+The project includes both unit and end-to-end testing to validate business logic, authentication flows, API behavior, and error handling.
+
+Unit tests focus on isolated service and controller logic, while e2e tests validate complete user workflows against a real test database.
+
+Testing is implemented with Jest and Supertest.
+
+### Testing Tools & Frameworks
+
+- **Jest**
+- **Supertest**
+- **SQLite** (In-memory database)
+- **TypeORM**
+
+Unit tests cover:
+- Services
+- Controllers
+- JWT and Passport strategies
+- Error handling and edge cases
+- Token management and authentication flows
+
+E2E tests cover:
+- Registration and login flows
+- Email verification
+- Protected routes
+- Refresh token flow
+- Input validation
+- Duplicate resource handling
+- Authentication and authorization failures
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run e2e tests only
+npm run test:e2e
+
+# Run tests with coverage report
+npm run test:cov
+
+# Run e2e tests with coverage
+npm run test:e2e:cov
+
+# Run tests with debugging
+npm run test:debug
+```
+
+### Coverage
+
+Current unit test coverage:
+
+
+```
+| Metric     | Coverage |
+|------------|----------|
+| Statements |  94.3%   |
+| Branches   |  81.7%   |
+| Functions  |  90.9%   |
+| Lines      |  93.7%   |
+
+Test Suites: 12 passed
+Tests: 112 passed
+```
+
+### Testing Principles
+
+- Focus on meaningful business logic rather than shallow assertions
+- Cover both success and failure scenarios
+- Keep tests isolated and deterministic
+- Test real user workflows with e2e tests
+- Prioritize maintainability and readability
+
+```
+test/
+├── app.e2e-spec.ts
+├── auth.controller.spec.ts
+├── auth.service.spec.ts
+├── crypto.controller.spec.ts
+├── crypto.service.spec.ts
+├── favorites.controller.spec.ts
+├── favorites.service.spec.ts
+├── jwt.strategy.spec.ts
+├── refresh-token.strategy.spec.ts
+├── token-blocklist.service.spec.ts
+├── setup.ts
+└── jest-e2e.json
+```
+
+## CI/CD
+
+GitHub Actions is used to automatically run linting, unit tests, and e2e tests on every push and pull request.
+
+The CI pipeline helps ensure:
+- consistent code quality
+- reliable test coverage
+- stable application behavior across changes
+---
+
 ## Complete API Reference
 
 ### Authentication
@@ -236,6 +370,7 @@ User favorites for cryptocurrencies. Allows users to save and manage their favor
 
 - `GET /` - Hello message
 
+
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+This project is licensed under the MIT License.

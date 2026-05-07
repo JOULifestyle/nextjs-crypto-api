@@ -12,6 +12,7 @@ export class RegisterDto {
     example: 'user@example.com',
     description: 'User email address',
   })
+  @IsEmail()
   @IsString()
   @IsNotEmpty()
   email: string;
@@ -39,6 +40,7 @@ export class LoginDto {
     example: 'user@example.com',
     description: 'User email address',
   })
+  @IsEmail()
   @IsString()
   @IsNotEmpty()
   email: string;
@@ -64,6 +66,7 @@ export class ForgotPasswordDto {
     example: 'user@example.com',
     description: 'User email address',
   })
+  @IsEmail()
   @IsString()
   @IsNotEmpty()
   email: string;

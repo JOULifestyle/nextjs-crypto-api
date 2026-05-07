@@ -1,14 +1,15 @@
 import {
   Entity,
   Column,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 
 @Entity()
 export class Crypto {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryColumn()
+  id: string;
 
   @Column()
   name: string;
@@ -17,14 +18,17 @@ export class Crypto {
   symbol: string;
 
   @Column('decimal', { precision: 20, scale: 10 })
-  price: number;
+  currentPrice: number;
 
   @Column('decimal', { precision: 30, scale: 2, nullable: true })
   marketCap: number;
 
   @Column('decimal', { precision: 20, scale: 2, nullable: true })
-  volume24h: number;
+  totalVolume: number;
 
   @CreateDateColumn()
   fetchedAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

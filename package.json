@@ -17,7 +17,8 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:e2e": "docker compose up -d db && sleep 3 && jest --config ./test/jest-e2e.json",
+"test:e2e:cov": "docker compose up -d db && sleep 3 && jest --config ./test/jest-e2e.json --coverage",
     "docker:dev": "docker compose up --build",
     "docker:dev:down": "docker compose down",
     "docker:prod": "docker compose -f docker-compose.prod.yml up --build -d",
@@ -39,6 +40,7 @@
     "@types/nodemailer": "^8.0.0",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.9.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "cookie-parser": "^1.4.7",
@@ -61,6 +63,7 @@
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
     "@types/bcryptjs": "^2.4.6",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
@@ -91,14 +94,37 @@
       "ts"
     ],
     "rootDir": ".",
-    "testRegex": ".*\\.spec\\.ts$",
+    "testMatch": [
+      "<rootDir>/test/**/*.spec.ts",
+      "<rootDir>/src/**/*.spec.ts"
+    ],
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "src/**/*.(t|j)s"
+      "src/**/*.ts",
+      "!src/**/*.module.ts",
+      "!src/main.ts",
+      "!src/**/*.entity.ts",
+      "!src/**/*.dto.ts"
     ],
     "coverageDirectory": "coverage",
-    "testEnvironment": "node"
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 75,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      }
+    },
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": [
+      "<rootDir>/test/setup.ts"
+    ]
   }
 }

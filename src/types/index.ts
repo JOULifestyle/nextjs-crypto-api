@@ -33,3 +33,12 @@ export interface LoginResponse {
   refresh_token: string;
   user: UserWithoutSensitiveData;
 }
+
+export interface CoinGeckoCoin {
+  id: string;
+  name: string;
+  symbol: string;
+  current_price: number;
+  market_cap: number;
+  total_volume: number;
+}

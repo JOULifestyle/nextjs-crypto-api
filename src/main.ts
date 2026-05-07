@@ -11,14 +11,11 @@ async function bootstrap() {
     origin: true,
     credentials: true,
   });
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
-
+  app.useGlobalPipes(new ValidationPipe({
+  whitelist: true,
+  transform: true,
+  forbidNonWhitelisted: true,
+}));
   // Swagger setup
   const config = new DocumentBuilder()
     .setTitle('Crypto API')

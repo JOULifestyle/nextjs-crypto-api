@@ -17,7 +17,7 @@ export class FavoritesService {
     private cryptoRepository: Repository<Crypto>,
   ) {}
 
-  async addFavorite(userId: number, cryptoId: number): Promise<Favorite> {
+  async addFavorite(userId: number, cryptoId: string): Promise<Favorite> {
     const crypto = await this.cryptoRepository.findOne({
       where: { id: cryptoId },
     });
@@ -42,7 +42,7 @@ export class FavoritesService {
     return this.favoriteRepository.save(favorite);
   }
 
-  async removeFavorite(userId: number, cryptoId: number): Promise<void> {
+  async removeFavorite(userId: number, cryptoId: string): Promise<void> {
     const favorite = await this.favoriteRepository.findOne({
       where: { user: { id: userId }, crypto: { id: cryptoId } },
     });
