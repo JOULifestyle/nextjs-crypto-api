@@ -1,10 +1,10 @@
 <p align="center">
-  <a href="https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/ci.yml">
-    <img src="https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/ci.yml/badge.svg" alt="CI Status" />
+  <a href="https://github.com/JOULifestyle/nextjs-crypto-api/actions/workflows/ci.yml">
+    <img src="https://github.com/JOULifestyle/nextjs-crypto-api/actions/workflows/ci.yml/badge.svg" alt="CI Status" />
   </a>
 
-  <a href="https://codecov.io/gh/YOUR_USERNAME/YOUR_REPO">
-    <img src="https://codecov.io/gh/YOUR_USERNAME/YOUR_REPO/branch/main/graph/badge.svg" alt="Code Coverage" />
+  <a href="https://codecov.io/gh/JOULifestyle/nextjs-crypto-api">
+    <img src="https://codecov.io/gh/JOULifestyle/nextjs-crypto-api/branch/main/graph/badge.svg" alt="Code Coverage" />
   </a>
 
   <img src="https://img.shields.io/badge/tests-112%20passed-brightgreen" alt="Tests Passed" />
