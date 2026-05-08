@@ -11,7 +11,7 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
-import type { UserWithoutSensitiveData, LoginResponse } from '../src/types';
+import type { UserWithoutSensitiveData } from '../src/types';
 import * as bcrypt from 'bcryptjs';
 
 jest.mock('bcryptjs', () => ({
@@ -35,6 +35,15 @@ const setupAuthServiceTest = async () => {
 
   const mockJwtService = {
     sign: jest.fn(),
+    signAsync: jest.fn(),
+    verify: jest.fn(),
+    verifyAsync: jest.fn(),
+    decode: jest.fn(),
+    options: {} as any,
+    logger: {} as any,
+    mergeJwtOptions: jest.fn(),
+    overrideSecretFromOptions: jest.fn(),
+    getSecretKey: jest.fn(),
   };
 
   const mockEmailService = {
@@ -60,11 +69,17 @@ const setupAuthServiceTest = async () => {
 
   const service = module.get<AuthService>(AuthService);
   const userRepository = module.get(getRepositoryToken(User));
-  const jwtService = module.get(JwtService) as jest.Mocked<JwtService>;
-  const emailService = module.get(EmailService) as jest.Mocked<EmailService>;
-  const tokenBlocklistService = module.get(TokenBlocklistService) as jest.Mocked<TokenBlocklistService>;
+  const jwtService = module.get(JwtService);
+  const emailService = module.get(EmailService);
+  const tokenBlocklistService = module.get(TokenBlocklistService);
 
-  return { service, userRepository, jwtService, emailService, tokenBlocklistService };
+  return {
+    service,
+    userRepository,
+    jwtService,
+    emailService,
+    tokenBlocklistService,
+  };
 };
 
 describe('AuthService', () => {
@@ -103,19 +118,14 @@ describe('AuthService', () => {
     updatedAt: mockUser.updatedAt,
   };
 
-  const mockLoginResponse: LoginResponse = {
-    access_token: 'access-token',
-    refresh_token: 'refresh-token',
-    user: mockUserWithoutSensitive,
-  };
-
   beforeEach(async () => {
     const setup = await setupAuthServiceTest();
     service = setup.service;
     userRepository = setup.userRepository;
     jwtService = setup.jwtService as jest.Mocked<JwtService>;
     emailService = setup.emailService as jest.Mocked<EmailService>;
-    tokenBlocklistService = setup.tokenBlocklistService as jest.Mocked<TokenBlocklistService>;
+    tokenBlocklistService =
+      setup.tokenBlocklistService as jest.Mocked<TokenBlocklistService>;
   });
 
   afterEach(() => {
@@ -137,7 +147,10 @@ describe('AuthService', () => {
       expect(userRepository.findOne).toHaveBeenCalledWith({
         where: { email: mockUser.email },
       });
-      expect(bcrypt.compare).toHaveBeenCalledWith('password123', mockUser.password);
+      expect(bcrypt.compare).toHaveBeenCalledWith(
+        'password123',
+        mockUser.password,
+      );
       expect(result).toMatchObject({
         id: mockUser.id,
         email: mockUser.email,
@@ -161,7 +174,10 @@ describe('AuthService', () => {
       userRepository.findOne.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      const result = await service.validateUser(mockUser.email, 'wrongpassword');
+      const result = await service.validateUser(
+        mockUser.email,
+        'wrongpassword',
+      );
 
       expect(result).toBeNull();
     });
@@ -224,7 +240,11 @@ describe('AuthService', () => {
       emailService.sendVerificationEmail.mockResolvedValue(undefined);
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
 
-      const result = await service.register(newUserData.email, newUserData.password, newUserData.displayName);
+      const result = await service.register(
+        newUserData.email,
+        newUserData.password,
+        newUserData.displayName,
+      );
 
       expect(userRepository.findOne).toHaveBeenCalledWith({
         where: { email: newUserData.email },
@@ -237,7 +257,10 @@ describe('AuthService', () => {
         verificationToken: expect.any(String),
         verificationTokenExpires: expect.any(Date),
       });
-      expect(emailService.sendVerificationEmail).toHaveBeenCalledWith(newUserData.email, expect.any(String));
+      expect(emailService.sendVerificationEmail).toHaveBeenCalledWith(
+        newUserData.email,
+        expect.any(String),
+      );
       expect(result).toMatchObject({
         id: createdUser.id,
         email: createdUser.email,
@@ -286,19 +309,19 @@ describe('AuthService', () => {
       // Assert user is created successfully despite email failure
       expect(result).toMatchObject({
         id: mockUser.id,
-        email: newUserEmail
+        email: newUserEmail,
       });
 
       // Assert error is logged for monitoring/debugging
       expect(console.error).toHaveBeenCalledWith(
         'Failed to send verification email:',
-        expect.any(Error)
+        expect.any(Error),
       );
 
       // Assert email service was attempted with correct email
       expect(emailService.sendVerificationEmail).toHaveBeenCalledWith(
         newUserEmail,
-        expect.any(String) // verification token
+        expect.any(String), // verification token
       );
     });
 
@@ -318,7 +341,10 @@ describe('AuthService', () => {
         emailService.sendVerificationEmail.mockRejectedValueOnce(emailError);
         (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
 
-        const result = await service.register(`test${emailErrors.indexOf(emailError)}@example.com`, 'password123');
+        const result = await service.register(
+          `test${emailErrors.indexOf(emailError)}@example.com`,
+          'password123',
+        );
 
         // User should still be created successfully
         expect(result).toMatchObject({ id: mockUser.id });
@@ -326,12 +352,10 @@ describe('AuthService', () => {
         // Error should be logged
         expect(console.error).toHaveBeenCalledWith(
           'Failed to send verification email:',
-          emailError
+          emailError,
         );
       }
     });
-
-
   });
 
   describe('login', () => {
@@ -381,9 +405,9 @@ describe('AuthService', () => {
     it('should throw NotFoundException when user not found', async () => {
       userRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.refreshToken(1, 'test@example.com'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.refreshToken(1, 'test@example.com')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

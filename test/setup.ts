@@ -15,9 +15,11 @@ process.env.GOOGLE_CALLBACK_URL = 'http://localhost:3000/auth/google/callback';
 jest.setTimeout(30000);
 
 global.testUtils = {
-  wait: (ms: number) => new Promise(resolve => setTimeout(resolve, ms)),
+  wait: (ms: number) => new Promise((resolve) => setTimeout(resolve, ms)),
   randomString: (length: number = 10) =>
-    Math.random().toString(36).substring(2, length + 2),
+    Math.random()
+      .toString(36)
+      .substring(2, length + 2),
   randomEmail: () =>
     `test-${Math.random().toString(36).substring(2, 8)}@example.com`,
 };

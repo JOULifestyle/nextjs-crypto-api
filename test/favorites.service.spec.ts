@@ -14,11 +14,11 @@ describe('FavoritesService', () => {
 
   const mockCrypto = {
     id: 'bitcoin',
-  name: 'Bitcoin',
-  symbol: 'BTC',
-  currentPrice: 45000,
-  marketCap: 850000000000,
-  totalVolume: 25000000000,
+    name: 'Bitcoin',
+    symbol: 'BTC',
+    currentPrice: 45000,
+    marketCap: 850000000000,
+    totalVolume: 25000000000,
   };
 
   const mockFavorite = {
@@ -77,7 +77,7 @@ describe('FavoritesService', () => {
         where: { id: 'bitcoin' },
       });
       expect(favoriteRepository.findOne).toHaveBeenCalledWith({
-        where: { user: { id: mockUserId }, crypto: { id: 'bitcoin'  } },
+        where: { user: { id: mockUserId }, crypto: { id: 'bitcoin' } },
       });
       expect(favoriteRepository.create).toHaveBeenCalledWith({
         user: { id: mockUserId },
@@ -109,7 +109,9 @@ describe('FavoritesService', () => {
       favoriteRepository.create.mockReturnValue(mockFavorite);
       favoriteRepository.save.mockRejectedValue(new Error('Database error'));
 
-      await expect(service.addFavorite(mockUserId, 'bitcoin')).rejects.toThrow();
+      await expect(
+        service.addFavorite(mockUserId, 'bitcoin'),
+      ).rejects.toThrow();
     });
   });
 
@@ -129,16 +131,18 @@ describe('FavoritesService', () => {
     it('should throw NotFoundException when crypto not in favorites', async () => {
       favoriteRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.removeFavorite(mockUserId, 'bitcoin')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.removeFavorite(mockUserId, 'bitcoin'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should handle database remove errors', async () => {
       favoriteRepository.findOne.mockResolvedValue(mockFavorite);
       favoriteRepository.remove.mockRejectedValue(new Error('Database error'));
 
-      await expect(service.removeFavorite(mockUserId, 'bitcoin')).rejects.toThrow();
+      await expect(
+        service.removeFavorite(mockUserId, 'bitcoin'),
+      ).rejects.toThrow();
     });
   });
 

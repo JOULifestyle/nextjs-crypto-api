@@ -64,11 +64,16 @@ describe('GoogleStrategy', () => {
 
     const mockDone = jest.fn();
 
-    await strategy.validate('access-token', 'refresh-token', mockProfile as any, mockDone);
+    await strategy.validate(
+      'access-token',
+      'refresh-token',
+      mockProfile as any,
+      mockDone,
+    );
 
     expect(authService.validateOAuthLogin).toHaveBeenCalledWith(
       'google-123',
-      'test@example.com'
+      'test@example.com',
     );
     expect(mockDone).toHaveBeenCalledWith(null, mockUser);
   });
@@ -76,7 +81,9 @@ describe('GoogleStrategy', () => {
   it('should handle OAuth validation errors', async () => {
     // Mock the service to reject with an error
     const mockError = new Error('OAuth validation failed');
-    authService.validateOAuthLogin.mockImplementation(() => Promise.reject(mockError));
+    authService.validateOAuthLogin.mockImplementation(() =>
+      Promise.reject(mockError),
+    );
 
     const mockProfile = {
       id: 'google-123',
@@ -86,8 +93,18 @@ describe('GoogleStrategy', () => {
     const mockDone = jest.fn();
 
     // The strategy should propagate the error through Passport's done callback
-    await expect(strategy.validate('access-token', 'refresh-token', mockProfile as any, mockDone)).rejects.toThrow('OAuth validation failed');
+    await expect(
+      strategy.validate(
+        'access-token',
+        'refresh-token',
+        mockProfile as any,
+        mockDone,
+      ),
+    ).rejects.toThrow('OAuth validation failed');
 
-    expect(authService.validateOAuthLogin).toHaveBeenCalledWith('google-123', 'test@example.com');
+    expect(authService.validateOAuthLogin).toHaveBeenCalledWith(
+      'google-123',
+      'test@example.com',
+    );
   });
 });

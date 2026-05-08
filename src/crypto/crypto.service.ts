@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Crypto } from './crypto.entity';
 import { firstValueFrom } from 'rxjs';
-import { CoinGeckoCoin } from 'src/types';
+import { CoinGeckoCoin, CoinGeckoResponse } from 'src/types';
 
 @Injectable()
 export class CryptoService {
@@ -17,10 +17,12 @@ export class CryptoService {
   async fetchAndStoreCryptoData(): Promise<void> {
     const url =
       'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1';
-    const response = await firstValueFrom(this.httpService.get(url));
+    const response = await firstValueFrom(
+      this.httpService.get<CoinGeckoResponse[]>(url),
+    );
     const data = response.data;
 
-     if (!data || !Array.isArray(data)) {
+    if (!data || !Array.isArray(data)) {
       throw new Error('Invalid API response');
     }
 
@@ -33,9 +35,8 @@ export class CryptoService {
       totalVolume: coin.total_volume ?? null,
     }));
 
-      await this.cryptoRepository.upsert(cryptos, ['id']);
-    }
-  
+    await this.cryptoRepository.upsert(cryptos, ['id']);
+  }
 
   async getCryptoData(): Promise<Crypto[]> {
     return this.cryptoRepository.find({

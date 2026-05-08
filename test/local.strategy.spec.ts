@@ -47,23 +47,38 @@ describe('LocalStrategy', () => {
 
     const result = await strategy.validate('test@example.com', 'password123');
 
-    expect(authService.validateUser).toHaveBeenCalledWith('test@example.com', 'password123');
+    expect(authService.validateUser).toHaveBeenCalledWith(
+      'test@example.com',
+      'password123',
+    );
     expect(result).toEqual(mockUser);
   });
 
   it('should throw UnauthorizedException for invalid credentials', async () => {
     authService.validateUser.mockResolvedValue(null);
 
-    await expect(strategy.validate('test@example.com', 'wrongpassword')).rejects.toThrow(UnauthorizedException);
+    await expect(
+      strategy.validate('test@example.com', 'wrongpassword'),
+    ).rejects.toThrow(UnauthorizedException);
 
-    expect(authService.validateUser).toHaveBeenCalledWith('test@example.com', 'wrongpassword');
+    expect(authService.validateUser).toHaveBeenCalledWith(
+      'test@example.com',
+      'wrongpassword',
+    );
   });
 
   it('should handle validation service errors', async () => {
-    authService.validateUser.mockRejectedValue(new Error('Database connection failed'));
+    authService.validateUser.mockRejectedValue(
+      new Error('Database connection failed'),
+    );
 
-    await expect(strategy.validate('test@example.com', 'password123')).rejects.toThrow();
+    await expect(
+      strategy.validate('test@example.com', 'password123'),
+    ).rejects.toThrow();
 
-    expect(authService.validateUser).toHaveBeenCalledWith('test@example.com', 'password123');
+    expect(authService.validateUser).toHaveBeenCalledWith(
+      'test@example.com',
+      'password123',
+    );
   });
 });

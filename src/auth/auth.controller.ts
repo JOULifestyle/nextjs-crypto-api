@@ -21,7 +21,6 @@ import { LocalAuthGuard } from './local-auth.guard';
 import { GoogleAuthGuard } from './google-auth.guard';
 import { RefreshTokenGuard } from './refresh-token.guard';
 import { ResponseMessage } from '../shared/response.utils';
-import type { UserWithoutSensitiveData } from '../types';
 import {
   LoginDto,
   RegisterDto,

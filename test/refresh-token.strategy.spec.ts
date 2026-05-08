@@ -53,7 +53,6 @@ describe('RefreshTokenStrategy', () => {
       const result = await strategy.validate(mockReq as any, {
         sub: 1,
         email: 'test@example.com',
-        type: 'refresh',
       });
 
       expect(userRepository.findOne).toHaveBeenCalledWith({
@@ -79,7 +78,6 @@ describe('RefreshTokenStrategy', () => {
         strategy.validate(mockReq as any, {
           sub: 1,
           email: 'test@example.com',
-          type: 'refresh',
         }),
       ).rejects.toThrow('Refresh token expired');
     });
@@ -101,7 +99,6 @@ describe('RefreshTokenStrategy', () => {
         strategy.validate(mockReq as any, {
           sub: 1,
           email: 'test@example.com',
-          type: 'refresh',
         }),
       ).rejects.toThrow('Refresh token has been rotated');
     });
@@ -119,7 +116,6 @@ describe('RefreshTokenStrategy', () => {
         strategy.validate(mockReq as any, {
           sub: 999,
           email: 'nonexistent@example.com',
-          type: 'refresh',
         }),
       ).rejects.toThrow('Invalid refresh token');
     });
@@ -138,7 +134,6 @@ describe('RefreshTokenStrategy', () => {
         strategy.validate(mockReq as any, {
           sub: 1,
           email: 'test@example.com',
-          type: 'refresh',
         }),
       ).rejects.toThrow('Invalid refresh token');
     });
@@ -154,7 +149,6 @@ describe('RefreshTokenStrategy', () => {
         strategy.validate(mockReq as any, {
           sub: 1,
           email: 'test@example.com',
-          type: 'refresh',
         }),
       ).rejects.toThrow('No token provided');
     });

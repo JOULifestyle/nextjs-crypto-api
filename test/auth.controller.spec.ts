@@ -46,7 +46,8 @@ describe('AuthController', () => {
     process.env.JWT_SECRET = 'test-secret';
     process.env.GOOGLE_CLIENT_ID = 'test-client-id';
     process.env.GOOGLE_CLIENT_SECRET = 'test-client-secret';
-    process.env.GOOGLE_CALLBACK_URL = 'http://localhost:3000/auth/google/callback';
+    process.env.GOOGLE_CALLBACK_URL =
+      'http://localhost:3000/auth/google/callback';
 
     const mockUserRepository = {
       findOne: jest.fn(),
@@ -84,7 +85,10 @@ describe('AuthController', () => {
       providers: [
         { provide: AuthService, useValue: mockAuthService },
         { provide: getRepositoryToken(User), useValue: mockUserRepository },
-        { provide: JwtService, useValue: { sign: jest.fn().mockReturnValue('mock-token') } },
+        {
+          provide: JwtService,
+          useValue: { sign: jest.fn().mockReturnValue('mock-token') },
+        },
         { provide: EmailService, useValue: mockEmailService },
         { provide: TokenBlocklistService, useValue: mockTokenBlocklistService },
       ],
@@ -117,7 +121,7 @@ describe('AuthController', () => {
       );
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
-expect(result.data?.user).toEqual(mockUser);
+      expect(result.data?.user).toEqual(mockUser);
       expect(result.message).toBe('User registered successfully');
     });
 
@@ -188,9 +192,13 @@ expect(result.data?.user).toEqual(mockUser);
       const mockRequest = {
         user: mockUser,
       };
-      authService.login.mockRejectedValue(new UnauthorizedException('OAuth failed'));
+      authService.login.mockRejectedValue(
+        new UnauthorizedException('OAuth failed'),
+      );
 
-      await expect(controller.googleAuthRedirect(mockRequest as any)).rejects.toThrow(UnauthorizedException);
+      await expect(
+        controller.googleAuthRedirect(mockRequest as any),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 
@@ -206,14 +214,22 @@ expect(result.data?.user).toEqual(mockUser);
     });
 
     it('should throw BadRequestException when token is missing', async () => {
-      await expect(controller.verifyEmailGet('')).rejects.toThrow(BadRequestException);
-      await expect(controller.verifyEmailGet(undefined as any)).rejects.toThrow(BadRequestException);
+      await expect(controller.verifyEmailGet('')).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(controller.verifyEmailGet(undefined as any)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should handle verification errors in GET request', async () => {
-      authService.verifyEmail.mockRejectedValue(new BadRequestException('Invalid token'));
+      authService.verifyEmail.mockRejectedValue(
+        new BadRequestException('Invalid token'),
+      );
 
-      await expect(controller.verifyEmailGet('invalid-token')).rejects.toThrow(BadRequestException);
+      await expect(controller.verifyEmailGet('invalid-token')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -228,7 +244,10 @@ expect(result.data?.user).toEqual(mockUser);
 
       const result = await controller.logout(mockRequest as any);
 
-      expect(authService.logout).toHaveBeenCalledWith(mockUser.id, 'access-token');
+      expect(authService.logout).toHaveBeenCalledWith(
+        mockUser.id,
+        'access-token',
+      );
       expect(result.success).toBe(true);
     });
 
@@ -252,10 +271,12 @@ expect(result.data?.user).toEqual(mockUser);
 
       const result = await controller.verifyEmail(verifyEmailDto);
 
-      expect(authService.verifyEmail).toHaveBeenCalledWith(verifyEmailDto.token);
+      expect(authService.verifyEmail).toHaveBeenCalledWith(
+        verifyEmailDto.token,
+      );
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
-expect(result.data?.user).toEqual(mockUser);
+      expect(result.data?.user).toEqual(mockUser);
     });
 
     it('should handle invalid verification token', async () => {
@@ -342,9 +363,9 @@ expect(result.data?.user).toEqual(mockUser);
       authService.resetPassword.mockRejectedValue(
         new BadRequestException('Invalid reset token'),
       );
-      await expect(
-        controller.resetPassword(resetPasswordDto),
-      ).rejects.toThrow(BadRequestException);
+      await expect(controller.resetPassword(resetPasswordDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });

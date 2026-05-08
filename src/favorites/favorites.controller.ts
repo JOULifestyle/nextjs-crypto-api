@@ -6,7 +6,6 @@ import {
   Param,
   UseGuards,
   Request,
-  ParseIntPipe,
 } from '@nestjs/common';
 import {
   ApiTags,

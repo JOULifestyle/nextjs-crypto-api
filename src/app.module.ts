@@ -13,7 +13,6 @@ import { EmailModule } from './email/email.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { Favorite } from './favorites/favorite.entity';
 
-
 @Module({
   imports: [
     ConfigModule.forRoot({

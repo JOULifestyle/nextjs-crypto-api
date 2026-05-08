@@ -5,7 +5,6 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Crypto } from '../src/crypto/crypto.entity';
 import { of, throwError } from 'rxjs';
 import { AxiosResponse } from 'axios';
-import { InternalServerErrorException } from '@nestjs/common';
 
 describe('CryptoService', () => {
   let service: CryptoService;
@@ -91,12 +90,11 @@ describe('CryptoService', () => {
       await service.fetchAndStoreCryptoData();
 
       expect(httpService.get).toHaveBeenCalledWith(
-        'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1'
+        'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1',
       );
-      expect(cryptoRepository.upsert).toHaveBeenCalledWith(
-  expect.any(Array),
-  ['id'],
-);
+      expect(cryptoRepository.upsert).toHaveBeenCalledWith(expect.any(Array), [
+        'id',
+      ]);
     });
 
     it('should handle API errors', async () => {
@@ -148,7 +146,9 @@ describe('CryptoService', () => {
     });
 
     it('should handle database query errors', async () => {
-      cryptoRepository.find.mockRejectedValue(new Error('Database query failed'));
+      cryptoRepository.find.mockRejectedValue(
+        new Error('Database query failed'),
+      );
 
       await expect(service.getCryptoData()).rejects.toThrow();
     });

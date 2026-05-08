@@ -19,14 +19,12 @@ export class RefreshTokenStrategy extends PassportStrategy(
     private userRepository: Repository<User>,
   ) {
     super({
-  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  ignoreExpiration: false as const,
-  secretOrKey: (
-    configService.get<string>('JWT_REFRESH_SECRET') ||
-    configService.get<string>('JWT_SECRET')
-  ) as string,
-  passReqToCallback: true as const,
-});
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false as const,
+      secretOrKey: (configService.get<string>('JWT_REFRESH_SECRET') ||
+        configService.get<string>('JWT_SECRET')) as string,
+      passReqToCallback: true as const,
+    });
   }
 
   async validate(

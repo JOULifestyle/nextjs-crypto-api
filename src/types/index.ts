@@ -42,3 +42,12 @@ export interface CoinGeckoCoin {
   market_cap: number;
   total_volume: number;
 }
+
+export interface CoinGeckoResponse {
+  id: string;
+  name: string;
+  symbol: string;
+  current_price: number;
+  market_cap: number;
+  total_volume: number;
+}

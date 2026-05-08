@@ -13,17 +13,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private tokenBlocklistService: TokenBlocklistService,
   ) {
     super({
-  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  ignoreExpiration: false as const,
-  secretOrKey: configService.get<string>('JWT_SECRET') as string,
-  passReqToCallback: true as const,
-});
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false as const,
+      secretOrKey: configService.get<string>('JWT_SECRET') as string,
+      passReqToCallback: true as const,
+    });
   }
 
-  async validate(
-    req: Request,
-    payload: JwtPayload,
-  ): Promise<{ id: number; email: string }> {
+  validate(req: Request, payload: JwtPayload): { id: number; email: string } {
     const token = req.headers['authorization']?.split(' ')[1];
 
     if (token && this.tokenBlocklistService.isBlocked(token)) {

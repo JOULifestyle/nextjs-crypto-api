@@ -40,13 +40,13 @@ export class AuthService {
       const isMatch = await bcrypt.compare(password, user.password);
       if (isMatch) {
         const {
-          password,
-          verificationToken,
-          verificationTokenExpires,
-          resetPasswordToken,
-          resetPasswordTokenExpires,
-          refreshToken,
-          refreshTokenExpires,
+          password: _password,
+          verificationToken: _verificationToken,
+          verificationTokenExpires: _verificationTokenExpires,
+          resetPasswordToken: _resetPasswordToken,
+          resetPasswordTokenExpires: _resetPasswordTokenExpires,
+          refreshToken: _refreshToken,
+          refreshTokenExpires: _refreshTokenExpires,
           ...result
         } = user;
         return result;
@@ -83,13 +83,13 @@ export class AuthService {
       await this.userRepository.save(user);
     }
     const {
-      password,
-      verificationToken,
-      verificationTokenExpires,
-      resetPasswordToken,
-      resetPasswordTokenExpires,
-      refreshToken,
-      refreshTokenExpires,
+      password: _password,
+      verificationToken: _verificationToken,
+      verificationTokenExpires: _verificationTokenExpires,
+      resetPasswordToken: _resetPasswordToken,
+      resetPasswordTokenExpires: _resetPasswordTokenExpires,
+      refreshToken: _refreshToken,
+      refreshTokenExpires: _refreshTokenExpires,
       ...result
     } = user;
     return result;
@@ -145,13 +145,13 @@ export class AuthService {
     }
 
     const {
-      password: _,
-      verificationToken: __,
-      verificationTokenExpires: ___,
-      resetPasswordToken,
-      resetPasswordTokenExpires,
-      refreshToken,
-      refreshTokenExpires,
+      password: _password,
+      verificationToken: _verificationToken,
+      verificationTokenExpires: _verificationTokenExpires,
+      resetPasswordToken: _resetPasswordToken,
+      resetPasswordTokenExpires: _resetPasswordTokenExpires,
+      refreshToken: _refreshToken,
+      refreshTokenExpires: _refreshTokenExpires,
       ...result
     } = user;
     return result;
@@ -236,13 +236,13 @@ export class AuthService {
     });
 
     const {
-      password,
-      verificationToken,
-      verificationTokenExpires,
-      resetPasswordToken,
-      resetPasswordTokenExpires,
-      refreshToken,
-      refreshTokenExpires,
+      password: _password,
+      verificationToken: _verificationToken,
+      verificationTokenExpires: _verificationTokenExpires,
+      resetPasswordToken: _resetPasswordToken,
+      resetPasswordTokenExpires: _resetPasswordTokenExpires,
+      refreshToken: _refreshToken,
+      refreshTokenExpires: _refreshTokenExpires,
       ...result
     } = user;
 
@@ -279,13 +279,13 @@ export class AuthService {
     await this.userRepository.save(user);
 
     const {
-      password,
-      verificationToken,
-      verificationTokenExpires,
-      resetPasswordToken,
-      resetPasswordTokenExpires,
-      refreshToken,      
-  refreshTokenExpires, 
+      password: _password,
+      verificationToken: _verificationToken,
+      verificationTokenExpires: _verificationTokenExpires,
+      resetPasswordToken: _resetPasswordToken,
+      resetPasswordTokenExpires: _resetPasswordTokenExpires,
+      refreshToken: _refreshToken,
+      refreshTokenExpires: _refreshTokenExpires,
       ...result
     } = user;
     return result;
@@ -377,13 +377,13 @@ export class AuthService {
     await this.userRepository.save(user);
 
     const {
-      password,
-      verificationToken,
-      verificationTokenExpires,
-      resetPasswordToken,
-      resetPasswordTokenExpires,
-      refreshToken,
-    refreshTokenExpires,
+      password: _password,
+      verificationToken: _verificationToken,
+      verificationTokenExpires: _verificationTokenExpires,
+      resetPasswordToken: _resetPasswordToken,
+      resetPasswordTokenExpires: _resetPasswordTokenExpires,
+      refreshToken: _refreshToken,
+      refreshTokenExpires: _refreshTokenExpires,
       ...result
     } = user;
     return result;

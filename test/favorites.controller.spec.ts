@@ -88,9 +88,9 @@ describe('FavoritesController', () => {
         new ConflictException('Already in favorites'),
       );
 
-      await expect(controller.addFavorite(mockRequest, 'bitcoin')).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(
+        controller.addFavorite(mockRequest, 'bitcoin'),
+      ).rejects.toThrow(ConflictException);
     });
 
     it('should handle invalid crypto ID', async () => {
@@ -98,9 +98,9 @@ describe('FavoritesController', () => {
         new NotFoundException('Crypto not found'),
       );
 
-      await expect(controller.addFavorite(mockRequest, 'invlid')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        controller.addFavorite(mockRequest, 'invlid'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -110,7 +110,10 @@ describe('FavoritesController', () => {
 
       const result = await controller.removeFavorite(mockRequest, 'bitcoin');
 
-      expect(favoritesService.removeFavorite).toHaveBeenCalledWith(1, 'bitcoin');
+      expect(favoritesService.removeFavorite).toHaveBeenCalledWith(
+        1,
+        'bitcoin',
+      );
       expect(result.success).toBe(true);
     });
 
@@ -119,9 +122,9 @@ describe('FavoritesController', () => {
         new NotFoundException('Favorite not found'),
       );
 
-      await expect(controller.removeFavorite(mockRequest, 'bitcoin')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        controller.removeFavorite(mockRequest, 'bitcoin'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 

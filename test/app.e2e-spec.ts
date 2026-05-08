@@ -65,11 +65,13 @@ describe('App (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({
-  whitelist: true,
-  transform: true,
-  forbidNonWhitelisted: true,
-}));
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+        forbidNonWhitelisted: true,
+      }),
+    );
     await app.init();
 
     dataSource = app.get(DataSource);
@@ -152,11 +154,11 @@ describe('App (e2e)', () => {
           email: testUser.email,
           password: testUser.password,
         });
- expect(loginResponse.status).toBe(201);
-  expect(loginResponse.body.data).toHaveProperty('access_token');
+      expect(loginResponse.status).toBe(201);
+      expect(loginResponse.body.data).toHaveProperty('access_token');
       authToken = loginResponse.body.data.access_token;
       expect(authToken).toBeDefined();
-  expect(authToken).not.toBeNull();
+      expect(authToken).not.toBeNull();
     });
   });
 
@@ -164,7 +166,7 @@ describe('App (e2e)', () => {
     beforeAll(async () => {
       // Create and verify user for this test suite (use different email to avoid conflicts)
       const cryptoUser = { ...testUser, email: 'crypto-test@example.com' };
-      const registerResponse = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .post('/auth/register')
         .send(cryptoUser);
 
@@ -206,23 +208,22 @@ describe('App (e2e)', () => {
     });
 
     it('should reject crypto fetch without auth', async () => {
-      await request(app.getHttpServer())
-        .post('/crypto/fetch')
-        .expect(401);
+      await request(app.getHttpServer()).post('/crypto/fetch').expect(401);
     });
 
     it('should reject crypto get without auth', async () => {
-      await request(app.getHttpServer())
-        .get('/crypto')
-        .expect(401);
+      await request(app.getHttpServer()).get('/crypto').expect(401);
     });
   });
 
   describe('Favorites Operations', () => {
     beforeAll(async () => {
       // Create and verify user for this test suite (use different email to avoid conflicts)
-      const favoritesUser = { ...testUser, email: 'favorites-test@example.com' };
-      const registerResponse = await request(app.getHttpServer())
+      const favoritesUser = {
+        ...testUser,
+        email: 'favorites-test@example.com',
+      };
+      await request(app.getHttpServer())
         .post('/auth/register')
         .send(favoritesUser);
 
@@ -299,7 +300,7 @@ describe('App (e2e)', () => {
 
       // Manually expire the token by setting system time to future
       const originalDateNow = Date.now;
-      const futureTime = originalDateNow() + (8 * 24 * 60 * 60 * 1000); // 8 days in future
+      const futureTime = originalDateNow() + 8 * 24 * 60 * 60 * 1000; // 8 days in future
 
       // Mock Date.now to simulate token expiration
       jest.spyOn(Date, 'now').mockReturnValue(futureTime);
@@ -328,7 +329,10 @@ describe('App (e2e)', () => {
       for (const token of malformedTokens) {
         await request(app.getHttpServer())
           .get('/crypto')
-          .set('Authorization', token.startsWith('Bearer') ? token : `Bearer ${token}`)
+          .set(
+            'Authorization',
+            token.startsWith('Bearer') ? token : `Bearer ${token}`,
+          )
           .expect(401);
       }
     });
@@ -397,7 +401,9 @@ describe('App (e2e)', () => {
 
         if (expiredUserFromDb?.verificationToken) {
           // Manually expire the token
-          expiredUserFromDb.verificationTokenExpires = new Date(Date.now() - 3600000);
+          expiredUserFromDb.verificationTokenExpires = new Date(
+            Date.now() - 3600000,
+          );
           await userRepository.save(expiredUserFromDb);
 
           await request(app.getHttpServer())

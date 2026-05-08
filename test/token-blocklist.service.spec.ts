@@ -17,33 +17,33 @@ describe('TokenBlocklistService', () => {
   });
 
   describe('add and isBlocked', () => {
-    it('should add token to blocklist and detect it as blocked', async () => {
+    it('should add token to blocklist and detect it as blocked', () => {
       const token = 'test-token-to-block';
 
-      await service.add(token);
+      service.add(token);
 
-      const isBlocked = await service.isBlocked(token);
+      const isBlocked = service.isBlocked(token);
       expect(isBlocked).toBe(true);
     });
 
-    it('should return false for non-blocked token', async () => {
+    it('should return false for non-blocked token', () => {
       const token = 'never-blocked-token';
 
-      const isBlocked = await service.isBlocked(token);
+      const isBlocked = service.isBlocked(token);
       expect(isBlocked).toBe(false);
     });
 
-    it('should handle multiple tokens in blocklist', async () => {
+    it('should handle multiple tokens in blocklist', () => {
       const token1 = 'blocked-token-1';
       const token2 = 'blocked-token-2';
       const token3 = 'not-blocked-token';
 
-      await service.add(token1);
-      await service.add(token2);
+      service.add(token1);
+      service.add(token2);
 
-      expect(await service.isBlocked(token1)).toBe(true);
-      expect(await service.isBlocked(token2)).toBe(true);
-      expect(await service.isBlocked(token3)).toBe(false);
+      expect(service.isBlocked(token1)).toBe(true);
+      expect(service.isBlocked(token2)).toBe(true);
+      expect(service.isBlocked(token3)).toBe(false);
     });
   });
 });

@@ -11,15 +11,19 @@ async function bootstrap() {
     origin: true,
     credentials: true,
   });
-  app.useGlobalPipes(new ValidationPipe({
-  whitelist: true,
-  transform: true,
-  forbidNonWhitelisted: true,
-}));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
   // Swagger setup
   const config = new DocumentBuilder()
     .setTitle('Crypto API')
-    .setDescription('A NestJS-based REST API for cryptocurrency data with comprehensive user authentication')
+    .setDescription(
+      'A NestJS-based REST API for cryptocurrency data with comprehensive user authentication',
+    )
     .setVersion('1.0')
     .addTag('auth', 'Authentication endpoints')
     .addTag('crypto', 'Cryptocurrency data endpoints')
@@ -41,4 +45,4 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 3000);
 }
-bootstrap();
+bootstrap().catch(console.error);
